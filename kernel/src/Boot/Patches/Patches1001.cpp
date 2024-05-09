@@ -18,7 +18,7 @@ void Mira::Boot::Patches::install_prerunPatches_1001()
 	uint8_t *kmem;
 
 	// Enable UART
-	kmem = (uint8_t *)&gKernelBase[01a78a78]; //
+	kmem = (uint8_t *)&gKernelBase[0x1a78a78]; //
 	kmem[0] = 0x00;
 	// kmem[1] = 0x00; // Why?
 	// kmem[2] = 0x00;
