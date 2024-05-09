@@ -301,7 +301,7 @@ bool FakePkgManager::ShellCorePatch()
 		return false;
 	}
 
-#if MIRA_PLATFORM >= MIRA_PLATFORM_ORBIS_BSD_450 && MIRA_PLATFORM != MIRA_PLATFORM_ORBIS_BSD_900
+#if MIRA_PLATFORM >= MIRA_PLATFORM_ORBIS_BSD_450 && MIRA_PLATFORM < MIRA_PLATFORM_ORBIS_BSD_900
 	s_Ret = Utilities::ProcessReadWriteMemory(s_Process, (void*)(s_TextStart + ssc_external_hdd_pkg_installer_patch), 1, (void*)"\x00", nullptr, true);
 	if (s_Ret < 0)
 	{
@@ -394,7 +394,7 @@ bool FakePkgManager::ShellUIPatch()
 	s_Entries = nullptr;
 
 	// TODO: Fix all fw suport; I don't feel like fixing 1.76 support atm -kd
-	#if MIRA_PLATFORM <= MIRA_PLATFORM_ORBIS_BSD_176 || (MIRA_PLATFORM > MIRA_PLATFORM_ORBIS_BSD_702 && MIRA_PLATFORM != MIRA_PLATFORM_ORBIS_BSD_900)
+	#if MIRA_PLATFORM <= MIRA_PLATFORM_ORBIS_BSD_176 || (MIRA_PLATFORM > MIRA_PLATFORM_ORBIS_BSD_702 && MIRA_PLATFORM < MIRA_PLATFORM_ORBIS_BSD_900)
 	#else
 
 	uint8_t mov__eax_1__ret[6] = { 0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3 };

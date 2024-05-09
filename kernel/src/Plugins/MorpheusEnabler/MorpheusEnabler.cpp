@@ -98,12 +98,14 @@ bool MorpheusEnabler::DoPatch()
 	delete [] s_Entries;
 	s_Entries = nullptr;
 
+#if MIRA_PLATFORM != MIRA_PLATFORM_ORBIS_BSD_1001
 	s_Ret = Utilities::ProcessReadWriteMemory(s_Process, (void*)(s_TextStart + ssc_enable_vr_patch), 3, (void*)"\x31\xC0\xC3", nullptr, true);
 	if (s_Ret < 0)
 	{
 			WriteLog(LL_Error, "ssc_enable_vr");
 			return false;
 	}
+#endif
 
 	return true;
 }

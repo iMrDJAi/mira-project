@@ -1,6 +1,6 @@
 # CHANGEME: Default Orbis Version
 ifeq ($(MIRA_PLATFORM),)
-MIRA_PLATFORM := MIRA_PLATFORM_ORBIS_BSD_505
+MIRA_PLATFORM := MIRA_PLATFORM_ORBIS_BSD_1001
 # $(error No firmware version set for MIRA_PLATFORM)
 endif
 
