@@ -112,7 +112,7 @@
 #define kdlsym_addr_pmap_activate  0xeb270
 #define kdlsym_addr_printf  0xc50f0
 // #define xref_kdlsym_addr_prison0  0x481780
-#define kdlsym_addr_prison0  0x111b8b0 // sus ^ 2
+#define kdlsym_addr_prison0  0x111b8b0
 // #define xref_kdlsym_addr_proc0  0x207d90
 #define kdlsym_addr_proc0  0x226ae50
 #define kdlsym_addr_proc_reparent  0x4190
@@ -201,7 +201,7 @@
 #define kdlsym_addr_vn_fullpath  0x246a00
 #define kdlsym_addr_vsnprintf  0xc5490
 #define kdlsym_addr_wakeup  0x286370
-#define kdlsym_addr_Xfast_syscall  0x1b4780
+#define kdlsym_addr_Xfast_syscall  0x1c0
 
 // PS4GDB
 #define kdlsym_addr_bzero  0x472c60
