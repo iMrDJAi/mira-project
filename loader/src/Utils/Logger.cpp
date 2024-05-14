@@ -35,8 +35,9 @@ Logger::Logger() :
 #endif
 	m_Handle = -1;
 
-	memset(m_Buffer, 0, sizeof(m_Buffer));
-	memset(m_FinalBuffer, 0, sizeof(m_FinalBuffer));
+	auto kmemset = (void(*)(void *s, int c, size_t n))kdlsym(memset);
+	kmemset(m_Buffer, 0, sizeof(m_Buffer));
+	kmemset(m_FinalBuffer, 0, sizeof(m_FinalBuffer));
 
 	// Initialize a mutex to prevent overlapping spam
 	auto printf = (void(*)(const char *format, ...))kdlsym(printf);

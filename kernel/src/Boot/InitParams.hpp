@@ -15,7 +15,7 @@ namespace Mira
         typedef struct InitParms_t
         {
             // Payload base address, can be allocated dynamically
-            uint64_t payloadBase;
+            uint8_t *payloadBase;
 
             // Payload size
             uint64_t payloadSize;

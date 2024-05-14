@@ -1,7 +1,6 @@
 # CHANGEME: Default Orbis Version
 ifeq ($(MIRA_PLATFORM),)
-MIRA_PLATFORM := MIRA_PLATFORM_ORBIS_BSD_1001
-# $(error No firmware version set for MIRA_PLATFORM)
+$(error No firmware version set for MIRA_PLATFORM)
 endif
 
 # Check to see if we are building in CI/Checking mode
@@ -111,8 +110,6 @@ post-build: main-build
 	@echo "Post-Build"
 	@echo "Linking $(PROJ_NAME)..."
 	@$(LNK) $(ALL_OBJ) -o $(OUT_DIR)/$(TARGET) $(LFLAGS) $(LIBS)
-	@echo "Creating Payload..."
-	@$(OBJCOPY) -O binary $(OUT_DIR)/$(TARGET) $(OUT_DIR)/payload.bin
 
 main-build: pre-build
 	@echo "Building for Firmware $(MIRA_PLATFORM)..."

@@ -122,6 +122,9 @@ namespace MiraLoader
         void* GetAllocatedMap() { return m_AllocatedMap; }
         Elf64_Xword GetAllocatedMapSize() { return m_AllocatedMapSize; }
 
+        static void* k_malloc(size_t size);
+        static void k_free(void* address);
+
     #ifdef _WIN32
         void DumpLoadedElf(const char* p_Path);
         void* DumpAllocatedMap() { return m_AllocatedMap; }

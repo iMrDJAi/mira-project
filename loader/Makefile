@@ -83,7 +83,10 @@ ALL_OBJ := $(ALL_OBJ_C:.s=.o)
 TARGET = "$(PROJ_NAME)_Orbis_${MIRA_PLATFORM}.elf"
 
 # Target payload name (data + text only, no elf)
-PAYLOAD = "$(PROJ_NAME)_Orbis_${MIRA_PLATFORM}.bin"
+PAYLOAD = "payload.bin"
+# PAYLOAD = "$(PROJ_NAME)_Orbis_${MIRA_PLATFORM}.bin"
+
+MIRA_ELF_PATH= "../kernel/build/$(PROJ_NAME)_Orbis_${MIRA_PLATFORM}.elf"
 
 .PHONY: all clean
 

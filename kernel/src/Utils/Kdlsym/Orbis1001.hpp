@@ -150,7 +150,9 @@
 #define kdlsym_addr_sceSblRngGetRandomNumber  0x646a70
 #define kdlsym_addr_sceSblServiceMailbox  0x62dbe0
 #define kdlsym_addr_sched_prio  0x1d5d50
-#define kdlsym_addr_self_orbis_sysvec  0x126ab88 // sysentvec
+// #define kdlsym_addr_self_orbis_sysvec  0x126ab88 // sysentvec
+// #define xref_kdlsym_addr_self_orbis_sysvec  0x3bee10
+#define kdlsym_addr_self_orbis_sysvec  0x1a6bd88
 #define kdlsym_addr_Sha256Hmac  0x13a3d0
 #define kdlsym_addr_snprintf  0xc53f0
 #define kdlsym_addr_spinlock_exit  0x7cfa0
@@ -248,6 +250,10 @@
 #define kdlsym_addr_sceRegMgrGetStr  0x4ede40
 // #define xref_kdlsym_addr_sceRegMgrSetStr  0x4f8ef0 // sys_regmgr_call
 #define kdlsym_addr_sceRegMgrSetStr  0x4f9881
+
+#define kdlsym_addr_sceKernelSendNotificationRequest 0xf33d0
+#define kdlsym_addr_vsprintf  0xc53c0
+#define kdlsym_addr_kern_nanosleep  0x26da30
 
 // SceShellCore patches - call sceKernelIsGenuineCEX
 #define ssc_sceKernelIsGenuineCEX_patchA                   0x16b6a4

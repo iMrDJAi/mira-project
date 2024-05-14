@@ -18,7 +18,7 @@
 #include <sys/mman.h>
 using namespace MiraLoader;
 
-extern void WriteNotificationLog(const char* text);
+// extern void WriteNotificationLog(const char* text);
 #endif
 
 /* values for type */
@@ -82,8 +82,8 @@ Loader::Loader(const void* p_Elf, uint32_t p_ElfSize, ElfLoaderType_t p_Type) :
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: could not load properly\n");
 		}
-		else
-			WriteNotificationLog("err: could not load properly\n");
+		// else
+			// WriteNotificationLog("err: could not load properly\n");
 	}
 
 }
@@ -179,8 +179,8 @@ bool Loader::ElfRelocInternal(Elf64_Addr p_RelocationBase, const void * p_Data, 
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: unknown reloc type %d\n", p_RelocationType);
 		}
-		else
-			WriteNotificationLog("err: unknown reloc type\n");
+		// else
+			// WriteNotificationLog("err: unknown reloc type\n");
 
 		return false;
 	}
@@ -230,8 +230,8 @@ bool Loader::ElfRelocInternal(Elf64_Addr p_RelocationBase, const void * p_Data, 
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("kldload: unexpected R_COPY relocation\n");
 		}
-		else
-			WriteNotificationLog("kldload: unexpected R_COPY relocation\n");
+		// else
+			// WriteNotificationLog("kldload: unexpected R_COPY relocation\n");
 
 		return false;
 
@@ -258,8 +258,8 @@ bool Loader::ElfRelocInternal(Elf64_Addr p_RelocationBase, const void * p_Data, 
 			printf("kldload: unexpected relocation type %lld\n",
 			s_Type);
 		}
-		else
-			WriteNotificationLog("kldload: unexpected relocation type\n");
+		// else
+			// WriteNotificationLog("kldload: unexpected relocation type\n");
 
 		return false;
 	}
@@ -297,8 +297,8 @@ Elf64_Addr Loader::Lookup(Elf64_Size p_SymbolIndex, bool p_CheckDependencies)
 		auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 		printf("err: Lookup not implemented\n");
 	}
-	else
-		WriteNotificationLog("err: Lookup not implemented\n");
+	// else
+		// WriteNotificationLog("err: Lookup not implemented\n");
 	return 0;
 }
 
@@ -312,8 +312,8 @@ Elf64_Addr Loader::LinkerFileLookupSymbol(const char * p_Name, bool p_CheckDepen
 		auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 		printf("err: LinkerFileLookupSymbol not implemented\n");
 	}
-	else
-		WriteNotificationLog("err: LinkerFileLookupSymbol not implemented\n");
+	// else
+		// WriteNotificationLog("err: LinkerFileLookupSymbol not implemented\n");
 	return 0;
 }
 
@@ -326,8 +326,8 @@ Elf64_Sym* Loader::LinkerFileLookupSymbolInternal(const char * p_Name, bool p_Ch
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: LinkerFileLookupSymbolInternal: missing symbol hash table\n");
 		}
-		else
-			WriteNotificationLog("err: LinkerFileLookupSymbolInternal: missing symbol hash table\n");
+		// else
+			// WriteNotificationLog("err: LinkerFileLookupSymbolInternal: missing symbol hash table\n");
 
 		return nullptr;
 	}
@@ -346,8 +346,8 @@ Elf64_Sym* Loader::LinkerFileLookupSymbolInternal(const char * p_Name, bool p_Ch
 				auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 				printf("err: corrupt symbol table\n");
 			}
-			else
-				WriteNotificationLog("err: corrupt symbol table\n");
+			// else
+				// WriteNotificationLog("err: corrupt symbol table\n");
 			return nullptr;
 		}
 
@@ -359,8 +359,8 @@ Elf64_Sym* Loader::LinkerFileLookupSymbolInternal(const char * p_Name, bool p_Ch
 				auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 				printf("err: corrupt symbol table\n");
 			}
-			else
-				WriteNotificationLog("err: corrupt symbol table\n");
+			// else
+				// WriteNotificationLog("err: corrupt symbol table\n");
 			return nullptr;
 		}
 
@@ -405,8 +405,8 @@ Elf64_Sym* Loader::LinkerFileLookupSymbolInternal(const char * p_Name, bool p_Ch
 		auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 		printf("err: symbol not found\n");
 	}
-	else
-		WriteNotificationLog("err: symbol not found\n");
+	// else
+		// WriteNotificationLog("err: symbol not found\n");
 	return nullptr;
 }
 
@@ -430,8 +430,8 @@ bool Loader::RelocateFile()
 					auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 					printf("warn: could not elf reloc local for rel's\n");
 				}
-				else
-					WriteNotificationLog("warn: could not elf reloc local for rel's\n");
+				// else
+					// WriteNotificationLog("warn: could not elf reloc local for rel's\n");
 			}
 
 			s_Rel++;
@@ -451,8 +451,8 @@ bool Loader::RelocateFile()
 					auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 					printf("warn: could not elf reloc local for rela's\n");
 				}
-				else
-					WriteNotificationLog("warn: could not elf reloc local for rela's\n");
+				// else
+					// WriteNotificationLog("warn: could not elf reloc local for rela's\n");
 			}
 
 
@@ -496,7 +496,7 @@ bool Loader::SetProtection(void * p_Address, Elf64_Xword p_Size, Elf64_Word p_Pr
 	{
 		if ((int64_t)syscall3(SYS_MPROTECT, p_Address, (void*)p_Size, (void*)(int64_t)p_Protection) < 0)
 		{
-			WriteNotificationLog("mprotect error\n");
+			// WriteNotificationLog("mprotect error\n");
 			return false;
 		}
 	}
@@ -545,8 +545,8 @@ bool Loader::ParseDynamic()
 					auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 					printf("err: elf64_sym size isn't correct in this elf wtf\n");
 				}
-				else
-					WriteNotificationLog("err: elf64_sym size isn't correct in this elf wtf\n");
+				// else
+					// WriteNotificationLog("err: elf64_sym size isn't correct in this elf wtf\n");
 
 				return false;
 			}
@@ -568,8 +568,8 @@ bool Loader::ParseDynamic()
 					auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 					printf("err: elf64_rel size isn't the correct size in this elf\n");
 				}
-				else
-					WriteNotificationLog("err: elf64_rel size isn't the correct size in this elf\n");
+				// else
+					// WriteNotificationLog("err: elf64_rel size isn't the correct size in this elf\n");
 				return false;
 			}
 			break;
@@ -593,8 +593,8 @@ bool Loader::ParseDynamic()
 					auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 					printf("err: elf64_rela size isn't the correct size in this elf\n");
 				}
-				else
-					WriteNotificationLog("err: elf64_rela size isn't the correct size in this elf\n");
+				// else
+					// WriteNotificationLog("err: elf64_rela size isn't the correct size in this elf\n");
 				return false;
 			}
 			break;
@@ -608,8 +608,8 @@ bool Loader::ParseDynamic()
 					auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 					printf("err: pltrel is not DT_REL or DT_RELA\n");
 				}
-				else
-					WriteNotificationLog("err: pltrel is not DT_REL or DT_RELA\n");
+				// else
+					// WriteNotificationLog("err: pltrel is not DT_REL or DT_RELA\n");
 				return false;
 			}
 			break;
@@ -649,8 +649,8 @@ bool Loader::ParseDpcpu()
 		auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 		printf("warn: ParseDpcpu not implemented.\n");
 	}
-	else
-		WriteNotificationLog("warn: ParseDpcpu not implemented.\n");
+	// else
+		// WriteNotificationLog("warn: ParseDpcpu not implemented.\n");
 	return true;
 }
 
@@ -665,7 +665,7 @@ const Elf64_Phdr * Loader::GetProgramHeaderByIndex(uint32_t p_Index)
 	return m_SourceProgramHeadersStart + p_Index;
 }
 
-void* k_malloc(size_t size)
+void* Loader::k_malloc(size_t size)
 {
 	if (!size)
 		size = sizeof(uint64_t);
@@ -684,7 +684,7 @@ void* k_malloc(size_t size)
 	return data + sizeof(uint64_t);
 }
 
-void k_free(void* address)
+void Loader::k_free(void* address)
 {
 	if (!address)
 		return;
@@ -702,6 +702,7 @@ void k_free(void* address)
 
 void * Loader::Allocate(Elf64_Xword p_Size)
 {
+	auto kmemset = (void(*)(void *s, int c, size_t n))kdlsym(memset);
 	// Validate that loader type is valid
 	if (m_LoaderType <= ElfLoaderType_t::Invalid ||
 		m_LoaderType >= ElfLoaderType_t::MAX)
@@ -713,7 +714,7 @@ void * Loader::Allocate(Elf64_Xword p_Size)
 		return nullptr;
 
 	// Zero allocation
-	memset(s_Allocation, 0, p_Size);
+	kmemset(s_Allocation, 0, p_Size);
 	return s_Allocation;
 #else
 	if (m_LoaderType == ElfLoaderType_t::KernelProc)
@@ -721,12 +722,12 @@ void * Loader::Allocate(Elf64_Xword p_Size)
 		//auto kmem_alloc = (vm_offset_t(*)(vm_map_t map, vm_size_t size))kdlsym(kmem_alloc);
 		//vm_map_t map = (vm_map_t)(*(uint64_t *)(kdlsym(kernel_map)));
 
-		void* s_Allocation = k_malloc(p_Size); //(void*)kmem_alloc(map, p_Size);
+		void* s_Allocation = Loader::k_malloc(p_Size); //(void*)kmem_alloc(map, p_Size);
 
 		//auto s_Allocation = new uint8_t[p_Size];
 
 		// Zero allocation
-		memset(s_Allocation, 0, p_Size);
+		kmemset(s_Allocation, 0, p_Size);
 
 		// return happy
 		return s_Allocation;
@@ -739,7 +740,7 @@ void * Loader::Allocate(Elf64_Xword p_Size)
 		if (s_AllocationData == nullptr)
 			return nullptr;
 
-		memset(s_AllocationData, 0, p_Size);
+		kmemset(s_AllocationData, 0, p_Size);
 
 		return s_AllocationData;
 	}
@@ -760,14 +761,14 @@ void Loader::Free(void * p_Data)
 #else
 	if (m_LoaderType == ElfLoaderType_t::KernelProc)
 	{
-		k_free(p_Data);
+		Loader::k_free(p_Data);
 		//delete [] static_cast<uint8_t*>(p_Data);
 	}
 	else if (m_LoaderType == ElfLoaderType_t::UserProc ||
 		m_LoaderType == ElfLoaderType_t::UserTrainer)
 	{
 		// TODO: unmap
-		WriteNotificationLog("err: Free for userland not implemented\n");
+		// WriteNotificationLog("err: Free for userland not implemented\n");
 		return;
 	}
 #endif
@@ -790,6 +791,9 @@ uint32_t Loader::Hash(const char * p_Name)
 
 bool Loader::Load()
 {
+	auto kmemset = (void(*)(void *s, int c, size_t n))kdlsym(memset);
+	auto kmemcpy = (void* (*)(void *dst, const void *src, size_t len))kdlsym(memcpy);
+
 	// Validate that our source header information is correct
 	if (m_SourceElf == nullptr || m_SourceElfSize <= sizeof(Elf64_Ehdr))
 		return false;
@@ -805,8 +809,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: file is not elf\n");
 		}
-		else
-			WriteNotificationLog("err: file is not elf\n");
+		// else
+			// WriteNotificationLog("err: file is not elf\n");
 		return false;
 	}
 
@@ -819,8 +823,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: unsupported file layout\n");
 		}
-		else
-			WriteNotificationLog("err: unsupported file layout\n");
+		// else
+			// WriteNotificationLog("err: unsupported file layout\n");
 		return false;
 	}
 
@@ -832,8 +836,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: unsupported file version\n");
 		}
-		else
-			WriteNotificationLog("err: unsupported file version\n");
+		// else
+			// WriteNotificationLog("err: unsupported file version\n");
 		return false;
 	}
 
@@ -845,8 +849,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: non-executable elf format\n");
 		}
-		else
-			WriteNotificationLog("err: non-executable elf format\n");
+		// else
+			// WriteNotificationLog("err: non-executable elf format\n");
 		return false;
 	}
 
@@ -858,8 +862,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: unsupported arch type\n");
 		}
-		else
-			WriteNotificationLog("err: unsupported arch type\n");
+		// else
+			// WriteNotificationLog("err: unsupported arch type\n");
 		return false;
 	}
 
@@ -871,8 +875,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: invalid program header entry size\n");
 		}
-		else
-			WriteNotificationLog("err: invalid program header entry size\n");
+		// else
+			// WriteNotificationLog("err: invalid program header entry size\n");
 		return false;
 	}
 
@@ -885,8 +889,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: corrupt elf program headers\n");
 		}
-		else
-			WriteNotificationLog("err: corrupt elf program headers\n");
+		// else
+			// WriteNotificationLog("err: corrupt elf program headers\n");
 		return false;
 	}
 
@@ -904,8 +908,8 @@ bool Loader::Load()
 				auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 				printf("err: could not get program header (idx: %d).\n", l_ProgramHeaderIndex);
 			}
-			else
-				WriteNotificationLog("err: could not get program header\n");
+			// else
+				// WriteNotificationLog("err: could not get program header\n");
 			continue;
 		}
 
@@ -919,8 +923,8 @@ bool Loader::Load()
 					auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 					printf("err: too many loadable segments\n");
 				}
-				else
-					WriteNotificationLog("err: too many loadable segments\n");
+				// else
+					// WriteNotificationLog("err: too many loadable segments\n");
 				return false;
 			}
 
@@ -948,8 +952,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: could not find dynamic program header\n");
 		}
-		else
-			WriteNotificationLog("err: could not find dynamic program header\n");
+		// else
+			// WriteNotificationLog("err: could not find dynamic program header\n");
 		return false;
 	}
 
@@ -961,8 +965,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: no loadable segments found\n");
 		}
-		else
-			WriteNotificationLog("err: no loadable segments found\n");
+		// else
+			// WriteNotificationLog("err: no loadable segments found\n");
 		return false;
 	}
 
@@ -980,8 +984,8 @@ bool Loader::Load()
 				auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 				printf("err: loadable program header (%lld) is invalid\n", l_LoadableIndex);
 			}
-			else
-				WriteNotificationLog("err: loadable program header\n");
+			// else
+				// WriteNotificationLog("err: loadable program header\n");
 			continue;
 		}
 
@@ -1005,8 +1009,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: could not calculate loadable range\n");
 		}
-		else
-			WriteNotificationLog("err: could not calculate loadable range\n");
+		// else
+			// WriteNotificationLog("err: could not calculate loadable range\n");
 		return false;
 	}
 
@@ -1022,8 +1026,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: could not allocate map\n");
 		}
-		else
-			WriteNotificationLog("err: could not allocate map\n");
+		// else
+			// WriteNotificationLog("err: could not allocate map\n");
 		return false;
 	}
 
@@ -1042,8 +1046,8 @@ bool Loader::Load()
 				auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 				printf("err: could not load loadable segment (%lld).\n", l_LoadableSegmentIndex);
 			}
-			else
-				WriteNotificationLog("err: could not load loadable segment\n");
+			// else
+				// WriteNotificationLog("err: could not load loadable segment\n");
 			return false;
 		}
 
@@ -1052,10 +1056,10 @@ bool Loader::Load()
 		// TODO: DO we need to check segment base?
 
 		// Zero the entire segment base
-		memset(l_SegmentBase, 0, l_LoadableSegment->p_memsz);
+		kmemset(l_SegmentBase, 0, l_LoadableSegment->p_memsz);
 
 		// Copy over just the file size from source
-		memcpy(l_SegmentBase, static_cast<const uint8_t*>(m_SourceElf) + l_LoadableSegment->p_offset, l_LoadableSegment->p_filesz);
+		kmemcpy(l_SegmentBase, static_cast<const uint8_t*>(m_SourceElf) + l_LoadableSegment->p_offset, l_LoadableSegment->p_filesz);
 
 		// Update permissions on this loadable segment
 
@@ -1087,8 +1091,8 @@ bool Loader::Load()
 				auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 				printf("err: could update memory protections\n");
 			}
-			else
-				WriteNotificationLog("err: could update memory protections\n");
+			// else
+				// WriteNotificationLog("err: could update memory protections\n");
 			return false;
 		}
 	}
@@ -1104,8 +1108,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: could not parse dynamics\n");
 		}
-		else
-			WriteNotificationLog("err: could not parse dynamics\n");
+		// else
+			// WriteNotificationLog("err: could not parse dynamics\n");
 		return false;
 	}
 
@@ -1117,8 +1121,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: could not parse pcpu info\n");
 		}
-		else
-			WriteNotificationLog("err: could not parse pcpu info\n");
+		// else
+			// WriteNotificationLog("err: could not parse pcpu info\n");
 		return false;
 	}
 
@@ -1131,8 +1135,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: could not elf reloc local\n");
 		}
-		else
-			WriteNotificationLog("err: could not elf reloc local\n");
+		// else
+			// WriteNotificationLog("err: could not elf reloc local\n");
 		return false;
 	}
 
@@ -1153,8 +1157,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("warn: no symbol information exists\n");
 		}
-		else
-			WriteNotificationLog("warn: no symbol information exists\n");
+		// else
+			// WriteNotificationLog("warn: no symbol information exists\n");
 		return true; // Ensure we return true here
 	}
 
@@ -1166,13 +1170,13 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: could not allocate section header data\n");
 		}
-		else
-			WriteNotificationLog("err: could not allocate section header data\n");
+		// else
+			// WriteNotificationLog("err: could not allocate section header data\n");
 		return true; // Elf is still ready to go
 	}
 
 	// Copy the table information
-	memcpy(s_SectionHeaderData, static_cast<const uint8_t*>(m_SourceElf) + m_SourceHeader->e_shoff, s_SectionHeaderSize);
+	kmemcpy(s_SectionHeaderData, static_cast<const uint8_t*>(m_SourceElf) + m_SourceHeader->e_shoff, s_SectionHeaderSize);
 
 
 	// Find the symbol table index, and the string table index
@@ -1196,8 +1200,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("warn: could not find symbol table index (%d) or symbol string table index (%d)\n", s_SymTabIndex, s_SymStrIndex);
 		}
-		else
-			WriteNotificationLog("warn: could not find symbol table or symbol string table\n");
+		// else
+			// WriteNotificationLog("warn: could not find symbol table or symbol string table\n");
 
 		// Don't forget to free memory
 		Free(s_SectionHeaderData);
@@ -1217,8 +1221,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: could not allocate symbol table (sz: 0x%llx)\n", m_SymbolTableSize);
 		}
-		else
-			WriteNotificationLog("err: could not allocate symbol table\n");
+		// else
+			// WriteNotificationLog("err: could not allocate symbol table\n");
 
 		Free(s_SectionHeaderData);
 		s_SectionHeaderData = nullptr;
@@ -1231,10 +1235,10 @@ bool Loader::Load()
 		auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 		printf("info: copying data from (%p 0x%llx) -> (%p 0x%llx)\n", static_cast<const uint8_t*>(m_SourceElf) + s_SectionHeaderData[s_SymTabIndex].sh_offset, m_SymbolTableSize, reinterpret_cast<void*>(m_SymbolTableBase), m_SymbolTableSize);
 	}
-	else
-		WriteNotificationLog("info: copying data\n");
+	// else
+		// WriteNotificationLog("info: copying data\n");
 
-	memcpy(reinterpret_cast<void*>(m_SymbolTableBase), static_cast<const uint8_t*>(m_SourceElf) + s_SectionHeaderData[s_SymTabIndex].sh_offset, m_SymbolTableSize);
+	kmemcpy(reinterpret_cast<void*>(m_SymbolTableBase), static_cast<const uint8_t*>(m_SourceElf) + s_SectionHeaderData[s_SymTabIndex].sh_offset, m_SymbolTableSize);
 
 	m_StringTableBaseSize = s_SectionHeaderData[s_SymStrIndex].sh_size;
 	m_StringTableBase = reinterpret_cast<Elf64_Addr>(Allocate(m_StringTableBaseSize));
@@ -1249,8 +1253,8 @@ bool Loader::Load()
 			auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 			printf("err: could not allocate string table (sz: 0x%llx)\n", m_StringTableBaseSize);
 		}
-		else
-			WriteNotificationLog("err: could not allocate string table\n");
+		// else
+			// WriteNotificationLog("err: could not allocate string table\n");
 		m_StringTableBaseSize = 0;
 
 		Free(s_SectionHeaderData);
@@ -1264,10 +1268,10 @@ bool Loader::Load()
 		auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 		printf("info: 2 copying data from (%p 0x%llx) -> (%p 0x%llx)\n", static_cast<const uint8_t*>(m_SourceElf) + s_SectionHeaderData[s_SymStrIndex].sh_offset, m_StringTableBaseSize, reinterpret_cast<void*>(m_StringTableBase), m_StringTableBaseSize);
 	}
-	else
-		WriteNotificationLog("info: 2 copying data\n");
+	// else
+		// WriteNotificationLog("info: 2 copying data\n");
 
-	memcpy(reinterpret_cast<void*>(m_StringTableBase), static_cast<const uint8_t*>(m_SourceElf) + s_SectionHeaderData[s_SymStrIndex].sh_offset, m_StringTableBaseSize);
+	kmemcpy(reinterpret_cast<void*>(m_StringTableBase), static_cast<const uint8_t*>(m_SourceElf) + s_SectionHeaderData[s_SymStrIndex].sh_offset, m_StringTableBaseSize);
 
 	m_DdbSymbolCount = m_SymbolTableSize / sizeof(Elf64_Sym);
 	m_DdbSymbolTable = (const Elf64_Sym*)m_SymbolTableBase;

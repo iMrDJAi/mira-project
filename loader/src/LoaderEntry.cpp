@@ -9,6 +9,7 @@ extern "C"
 #include <Utils/New.hpp>
 #include <Utils/Kdlsym.hpp>
 #include <Utils/Kernel.hpp>
+#include <Utils/SysWrappers.cpp>
 #include <Boot/Patches.hpp>
 #include <Boot/InitParams.hpp>
 
@@ -24,6 +25,9 @@ extern "C"
 #include <sys/imgact.h>
 #include <sys/filedesc.h>
 #include <sys/malloc.h>
+#include <sys/sysent.h>
+#include <sys/sysproto.h>
+#include <sys/time.h>
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/pmap.h>
@@ -33,6 +37,7 @@ extern "C"
 #include <sys/fcntl.h>
 #include <sys/mman.h>
 #include <netinet/in.h>
+#include <machine/stdarg.h>
 
 #include <Boot/MiraLoader.hpp>
 
@@ -61,29 +66,75 @@ int(*snprintf)(char *str, size_t size, const char *format, ...) = nullptr;
 
 void miraloader_kernelInitialization(struct thread* td, struct kexec_uap* uap);
 
-
-void WriteNotificationLog(const char* text)
+void sleep(struct thread * td, time_t time)
 {
-	if (!text)
-		return;
+	// auto sv = (struct sysentvec*)kdlsym(self_orbis_sysvec);
+	// struct sysent* sysents = sv->sv_table;
+	// auto sys_nanosleep = (int(*)(struct thread*, struct timespec*, struct timespec*))sysents[SYS_NANOSLEEP].sy_call;
 
-	// Load the sysutil module, needs to be rooted for this to work
-	int32_t moduleId = -1;
-	Dynlib::LoadPrx("/system/common/lib/libSceSysUtil.sprx", &moduleId);
+	// td->td_retval[0] = 0;
 
-	// Validate that the module loaded properly
-	if (moduleId == -1)
-		return;
+	gKernelBase = (uint8_t*)kernelRdmsr(0xC0000082) - kdlsym_addr_Xfast_syscall;
+	auto kern_nanosleep = (int(*)(struct thread*, struct timespec*, struct timespec*))kdlsym(kern_nanosleep);
 
-	int(*sceSysUtilSendSystemNotificationWithText)(int messageType, const char* message) = NULL;
+	struct timespec time_to_sleep;
+	time_to_sleep.tv_sec = time;
+	time_to_sleep.tv_nsec = 0;
 
-	// Resolve the symbol
-	Dynlib::Dlsym(moduleId, "sceSysUtilSendSystemNotificationWithText", &sceSysUtilSendSystemNotificationWithText);
+	struct timespec time_remaining = { 0 };
 
-	if (sceSysUtilSendSystemNotificationWithText)
-		sceSysUtilSendSystemNotificationWithText(222, text);
+	int retval;
+	do {
+		retval = kern_nanosleep(td, &time_to_sleep, &time_remaining);
+	} while (retval == 4);
 
-	Dynlib::UnloadPrx(moduleId);
+	// int error = sys_nanosleep(td, &time_to_sleep, nullptr);
+	// if (error) return -error;
+
+	// return td->td_retval[0];
+}
+
+// by OSM-Made
+typedef struct {
+  int type;
+  int reqId;
+  int priority;
+  int msgId;
+  int targetId;
+  int userId;
+  int unk1;
+  int unk2;
+  int appId;
+  int errorNum;
+  int unk3;
+  unsigned char useIconImageUri;
+  char message[1024];
+  char iconUri[1024];
+  char unk[1024];
+} OrbisNotificationRequest;
+
+void notify(struct thread* td, const char *fmt, ...)
+{
+  gKernelBase = (uint8_t*)kernelRdmsr(0xC0000082) - kdlsym_addr_Xfast_syscall;
+	auto vsprintf = (void(*)(const char *format, ...))kdlsym(vsprintf);
+	auto printf = (void(*)(const char *format, ...))kdlsym(printf);
+	auto sceKernelSendNotificationRequest = (int(*)(int device, OrbisNotificationRequest* req, int size , int blocking))kdlsym(sceKernelSendNotificationRequest);
+
+  OrbisNotificationRequest buf;
+
+  va_list args;
+  va_start(args, fmt);
+  vsprintf(buf.message, fmt, args);
+  va_end(args);
+	printf(buf.message);
+
+  buf.type = 0;
+  buf.unk3 = 0;
+  buf.useIconImageUri = 0;
+  buf.targetId = -1;
+
+  sceKernelSendNotificationRequest(0, &buf, sizeof(buf), 0);
+	sleep(td, 10);
 }
 
 void mira_escape(struct thread* td, void* uap)
@@ -118,103 +169,40 @@ void mira_escape(struct thread* td, void* uap)
 
 	cpu_enable_wp();
 
-	printf("[-] mira_escape\n");
+	notify(td, "applied patches!!!");
 }
 
+extern char _mira_elf_start, _mira_elf_end;
+size_t g_MiraElfSize;
 
 extern "C" void* mira_entry(void* args)
 {
-	// Escape the jail and sandbox
-	syscall2(KEXEC_SYSCALL_NUM, reinterpret_cast<void*>(mira_escape), NULL);
+	struct thread* td = curthread; // get current kernel thread context
 
-	//int32_t sysUtilModuleId = -1;
-	int32_t netModuleId = -1;
-	int32_t libcModuleId = -1;
-	//int32_t libKernelWebModuleId = -1;
+	// THIS NEEDS TO HAPPEN FIRST
+	mira_escape(td, nullptr);
 
-	{
-		Dynlib::LoadPrx("libSceLibcInternal.sprx", &libcModuleId);
+	auto printf = (void(*)(const char *format, ...))kdlsym(printf);
+	vm_map_t map = (vm_map_t)(*(uint64_t *)(kdlsym(kernel_map)));
+	auto kmem_alloc = (vm_offset_t(*)(vm_map_t map, vm_size_t size))kdlsym(kmem_alloc);
+	auto kthread_exit = (void(*)(void))kdlsym(kthread_exit);
+	auto kproc_create = (int(*)(void(*func)(void*), void* arg, struct proc** newpp, int flags, int pages, const char* fmt, ...))kdlsym(kproc_create);
+	auto kmemset = (void(*)(void *s, int c, size_t n))kdlsym(memset);
+	auto kmemcpy = (void* (*)(void *dst, const void *src, size_t len))kdlsym(memcpy);
 
-		Dynlib::Dlsym(libcModuleId, "snprintf", &snprintf);
+	// We need to calculate the elf size on the fly, otherwise it's 0 for some odd reason
+	g_MiraElfSize = (uint64_t)&_mira_elf_end - (uint64_t)&_mira_elf_start;
+	notify(td, "&mira_elf_*: %p %p", &_mira_elf_start, &_mira_elf_end);
+	notify(td, "calculated elf size: %lld", g_MiraElfSize); // 413000
 
-	}
+	uint8_t* buffer = static_cast<uint8_t*>(MiraLoader::Loader::k_malloc(g_MiraElfSize));
+	notify(td, "buffer allocated %p", buffer);
 
-	// Networking resolving
-	{
-		Dynlib::LoadPrx("libSceNet.sprx", &netModuleId);
+	kmemset(buffer, 0, g_MiraElfSize); // crashes here..
+	notify(td, "buffer memset");
 
-		Dynlib::Dlsym(netModuleId, "sceNetSocket", &sceNetSocket);
-		Dynlib::Dlsym(netModuleId, "sceNetSocketClose", &sceNetSocketClose);
-		Dynlib::Dlsym(netModuleId, "sceNetBind", &sceNetBind);
-		Dynlib::Dlsym(netModuleId, "sceNetListen", &sceNetListen);
-		Dynlib::Dlsym(netModuleId, "sceNetAccept", &sceNetAccept);
-		Dynlib::Dlsym(netModuleId, "sceNetRecv", &sceNetRecv);
-	}
-
-	// Allocate a 3MB buffer
-	size_t bufferSize = ALLOC_5MB;
-	uint8_t* buffer = (uint8_t*)_mmap(nullptr, bufferSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANON | MAP_PRIVATE, -1, 0);
-	if (!buffer)
-	{
-		WriteNotificationLog("could not allocate 5MB buffer");
-		return nullptr;
-	}
-	memset(buffer, 0, bufferSize);
-	//Loader::Memset(buffer, 0, bufferSize);
-	// Hold our server socket address
-	struct sockaddr_in serverAddress = { 0 };
-	//Loader::Memset(&serverAddress, 0, sizeof(serverAddress));
-
-	// Listen on port 9021
-	serverAddress.sin_len = sizeof(serverAddress);
-	serverAddress.sin_addr.s_addr = INADDR_ANY;
-	serverAddress.sin_port = __bswap16(9021); // port 9021
-	serverAddress.sin_family = AF_INET;
-
-	// Create a new socket
-	int32_t serverSocket = sceNetSocket("miraldr", AF_INET, SOCK_STREAM, 0);
-	if (serverSocket < 0)
-	{
-		WriteNotificationLog("socket error");
-		return nullptr;
-	}
-
-	// Bind to localhost
-	int32_t result = sceNetBind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
-	if (result < 0)
-	{
-		WriteNotificationLog("bind error");
-		return nullptr;
-	}
-
-	// Listen
-	result = sceNetListen(serverSocket, 10);
-	if (result < 0)
-	{
-		WriteNotificationLog("listen error");
-		return nullptr;
-	}
-
-	WriteNotificationLog("waiting for clients");
-
-	// Wait for a client to send something
-	int32_t clientSocket = sceNetAccept(serverSocket, nullptr, nullptr);
-	if (clientSocket < 0)
-	{
-		WriteNotificationLog("accept errror");
-		return nullptr;
-	}
-
-	int32_t currentSize = 0;
-	int32_t recvSize = 0;
-
-	// Recv one byte at a time until we get our buffer
-	while ((recvSize = sceNetRecv(clientSocket, buffer + currentSize, bufferSize - currentSize, 0)) > 0)
-		currentSize += recvSize;
-
-	// Close the client and server socket connections
-	sceNetSocketClose(clientSocket);
-	sceNetSocketClose(serverSocket);
+	kmemcpy(buffer, &_mira_elf_start, g_MiraElfSize);
+	notify(td, "buffer memcpy");
 
 	// Determine if we launch a elf or a payload
 	if (buffer[0] == ELFMAG0 &&
@@ -222,54 +210,102 @@ extern "C" void* mira_entry(void* args)
 		buffer[2] == ELFMAG2 &&
 		buffer[3] == ELFMAG3) // 0x7F 'ELF'
 	{
+		// Determine if we are launching kernel
+		bool isLaunchingKernel = true;
 
-
-		// TODO: Check for custom Mira elf section to determine launch type
-		char buf[64];
-		memset(buf, 0, sizeof(buf));
-
-		snprintf(buf, sizeof(buf), "elf: %p elfSize: %llx", buffer, currentSize);
-		WriteNotificationLog(buf);
-
-		uint8_t isLaunchingKernel = true;
 		if (isLaunchingKernel)
 		{
 			Mira::Boot::InitParams initParams = { 0 };
 			initParams.isElf = true;
 			initParams.isRunning = false;
-			initParams.payloadBase = (uint64_t)buffer;
-			initParams.payloadSize = currentSize;
+			initParams.payloadBase = buffer;
+			initParams.payloadSize = g_MiraElfSize;
 			initParams.process = nullptr;
 			initParams.elfLoader = nullptr;
 			initParams.entrypoint = nullptr;
 
-			syscall2(KEXEC_SYSCALL_NUM, reinterpret_cast<void*>(miraloader_kernelInitialization), reinterpret_cast<void*>(&initParams));
-		}
-		else
-		{
-			// Launch ELF
-			// TODO: Check/Add a flag to the elf that determines if this is a kernel or userland elf
-			// Loader(const void* p_Elf, uint32_t p_ElfSize, ElfLoaderType_t p_Type);
-			MiraLoader::Loader loader(buffer, currentSize, ElfLoaderType_t::UserProc);
+			notify(td, "InitParams created");
 
-			auto entryPoint = reinterpret_cast<void(*)(void*)>(loader.GetEntrypoint());
-			if (!entryPoint)
+			// initParams.osKernelTextBase = _g_osKernelTextBase;
+			// initParams.osKernelTextSize = _g_osKernelTextSize;
+			// initParams.osKernelDataBase = _g_osKernelDataBase;
+			// initParams.osKernelDataSize = _g_osKernelDataSize;
+			// initParams.osKernelPrison0 = _g_osKernelPrison0;
+			// initParams.osKernelRootvnode = _g_osKernelRootvnode;
+
+			// Allocate a new logger for the MiraLoader
+			auto s_Logger = Mira::Utils::Logger::GetInstance();
+			if (!s_Logger)
 			{
-				WriteNotificationLog("could not find entry point");
-				return NULL;
+				// WriteLog(LL_Debug,"[-] could not allocate logger");
+				kthread_exit();
+				return nullptr;
 			}
+			printf("logger created\n");
+			notify(td, "logger created");
 
-			// Launch userland
-			entryPoint(nullptr);
+			// Create launch parameters, this is floating in "free kernel space" so the other process should
+			// be able to grab and use the pointer directly
+			Mira::Boot::InitParams*  kernelInitParams = (Mira::Boot::InitParams*)kmem_alloc(map, sizeof(Mira::Boot::InitParams));
+			if (!kernelInitParams)
+			{
+				// WriteLog(LL_Error, "could not allocate initialization parameters.\n");
+				return nullptr;
+			}
+			notify(td, "kmem_alloc InitParams");
+			kmemset(kernelInitParams, 0, sizeof(*kernelInitParams));
+			notify(td, "memset InitParams");
+
+			// Copy over our initparams from stack to allocated
+			kmemcpy(kernelInitParams, &initParams, sizeof(initParams));
+			notify(td, "memcpy InitParams");
+
+			// // WriteLog(LL_Debug, "prison0: (%p), rootvnode: (%p).", kernelInitParams->osKernelPrison0, kernelInitParams->osKernelRootvnode);
+
+			// Determine if we launch a elf or a payload
+			// uint32_t magic = *(uint32_t*)kernelInitParams->payloadBase;
+			// if (magic != 0x464C457F)
+			// {
+			// 	// WriteLog(LL_Debug,"invalid elf header.\n");
+			// 	return nullptr;
+			// }
+			// // WriteLog(LL_Debug, "elf header: %X\n", magic);
+
+			// Launch ELF
+			MiraLoader::Loader* loader = new MiraLoader::Loader(kernelInitParams->payloadBase, kernelInitParams->payloadSize, ElfLoaderType_t::KernelProc);
+			if (!loader)
+			{
+				notify(td, "!loader");
+				// WriteLog(LL_Debug,"could not allocate loader\n");
+				return nullptr;
+			}
+			notify(td, "loader created");
+
+			// Update the loader
+			kernelInitParams->elfLoader = loader;
+			kernelInitParams->entrypoint = reinterpret_cast<void(*)(void*)>(loader->GetEntrypoint());
+			notify(td, "loader GetEntrypoint");
+			// kernelInitParams->kernelElfRelocatedBase = static_cast<uint8_t*>(loader->GetAllocatedMap());
+			// kernelInitParams->kernelElfRelocatedSize = loader->GetAllocatedMapSize();
+
+			// Update the initial running state
+			kernelInitParams->isRunning = false;
+
+			auto s_EntryPoint = kernelInitParams->entrypoint;
+			if (s_EntryPoint != nullptr)
+			{
+				notify(td, "Entrypoint");
+				printf("[+]entrypoint: %p", s_EntryPoint);
+				return nullptr;
+				(void)kproc_create(s_EntryPoint, kernelInitParams, &kernelInitParams->process, 0, 200, "miraldr2"); // 8MiB stack
+			}
+			else
+			{
+				notify(td, "[-]could not get entry point.");
+				printf("[-]could not get entry point.\n");
+			}	
+
 		}
-	}
-	else
-	{
-		// Launch Userland Payload
-		WriteNotificationLog("launching payload");
-
-		void(*payload_start)() = (void(*)())buffer;
-		payload_start();
 	}
 
 	return nullptr;
@@ -294,7 +330,7 @@ void miraloader_kernelInitialization(struct thread* td, struct kexec_uap* uap)
 	auto printf = (void(*)(const char *format, ...))kdlsym(printf);
 	auto kproc_create = (int(*)(void(*func)(void*), void* arg, struct proc** newpp, int flags, int pages, const char* fmt, ...))kdlsym(kproc_create);
 	vm_map_t map = (vm_map_t)(*(uint64_t *)(kdlsym(kernel_map)));
-	//auto memset = (void* (*)(void *s, int c, size_t n))kdlsym(memset);
+	auto kmemset = (void(*)(void *s, int c, size_t n))kdlsym(memset);
 	auto copyin = (int(*)(const void* uaddr, void* kaddr, size_t len))kdlsym(copyin);
 	auto kthread_exit = (void(*)(void))kdlsym(kthread_exit);
 
@@ -313,23 +349,23 @@ void miraloader_kernelInitialization(struct thread* td, struct kexec_uap* uap)
 	Mira::Boot::InitParams* initParams = (Mira::Boot::InitParams*)kmem_alloc(map, sizeof(Mira::Boot::InitParams));
 	if (!initParams)
 	{
-		WriteLog(LL_Error, "could not allocate initialization parameters.\n");
+		// WriteLog(LL_Error, "could not allocate initialization parameters.\n");
 		return;
 	}
-	memset(initParams, 0, sizeof(*initParams));
+	kmemset(initParams, 0, sizeof(*initParams));
 
 	// Copyin our new arguments from userland
 	int copyResult = copyin(userInitParams, initParams, sizeof(*initParams));
 	if (copyResult != 0)
 	{
 		kmem_free(map, initParams, sizeof(*initParams));
-		WriteLog(LL_Error, "could not copyin initalization parameters (%d)\n", copyResult);
+		// WriteLog(LL_Error, "could not copyin initalization parameters (%d)\n", copyResult);
 		return;
 	}
 
 	// initparams are read from the uap in this syscall func
 	uint64_t payloadSize = initParams->payloadSize;
-	uint64_t payloadBase = initParams->payloadBase;
+	uint8_t *payloadBase = initParams->payloadBase;
 
 	// Allocate some memory
 	uint8_t* kernelElf = (uint8_t*)kmem_alloc(map, payloadSize);
@@ -337,23 +373,23 @@ void miraloader_kernelInitialization(struct thread* td, struct kexec_uap* uap)
 	{
 		// Free the previously allocated initialization parameters
 		kmem_free(map, initParams, sizeof(*initParams));
-		WriteLog(LL_Error, "could not allocate kernel payload.\n");
+		// WriteLog(LL_Error, "could not allocate kernel payload.\n");
 		return;
 	}
-	memset(kernelElf, 0, payloadSize);
-	WriteLog(LL_Debug, "payloadBase: %p payloadSize: %llx kernelElf: %p\n", payloadBase, payloadSize, kernelElf);
+	kmemset(kernelElf, 0, payloadSize);
+	// WriteLog(LL_Debug, "payloadBase: %p payloadSize: %llx kernelElf: %p\n", payloadBase, payloadSize, kernelElf);
 
 	// Copy the ELF data from userland
 	copyResult = copyin((const void*)payloadBase, kernelElf, payloadSize);
 	if (copyResult != 0)
 	{
 		// Intentionally blow the fuck up
-		WriteLog(LL_Error, "fuck, this is bad...\n");
+		// WriteLog(LL_Error, "fuck, this is bad...\n");
 		for (;;)
 			__asm__("nop");
 	}
 
-	WriteLog(LL_Debug, "finished allocating and copying ELF from userland");
+	// WriteLog(LL_Debug, "finished allocating and copying ELF from userland");
 
 	// Determine if we launch a elf or a payload
 	uint32_t magic = *(uint32_t*)kernelElf;
@@ -362,7 +398,7 @@ void miraloader_kernelInitialization(struct thread* td, struct kexec_uap* uap)
 		printf("invalid elf header.\n");
 		return;
 	}
-	WriteLog(LL_Debug, "elf header: %X\n", magic);
+	// WriteLog(LL_Debug, "elf header: %X\n", magic);
 
 	// Launch ELF
 	MiraLoader::Loader* loader = new MiraLoader::Loader(kernelElf, payloadSize, ElfLoaderType_t::KernelProc); //malloc(sizeof(ElfLoader_t), M_LINKER, M_WAITOK);
@@ -376,7 +412,7 @@ void miraloader_kernelInitialization(struct thread* td, struct kexec_uap* uap)
 	initParams->elfLoader = loader;
 	initParams->entrypoint = reinterpret_cast<void(*)(void*)>(loader->GetEntrypoint());
 	initParams->allocatedBase = reinterpret_cast<uint64_t>(loader->GetAllocatedMap());
-	initParams->payloadBase = reinterpret_cast<uint64_t>(kernelElf);
+	initParams->payloadBase = reinterpret_cast<uint8_t*>(kernelElf);
 	initParams->payloadSize = payloadSize;
 
 	// Update the initial running state
