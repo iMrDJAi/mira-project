@@ -150,7 +150,8 @@
 #define kdlsym_addr_sceSblRngGetRandomNumber  0x646a70
 #define kdlsym_addr_sceSblServiceMailbox  0x62dbe0
 #define kdlsym_addr_sched_prio  0x1d5d50
-#define kdlsym_addr_self_orbis_sysvec  0x126ab88 // sysentvec
+// #define xref_kdlsym_addr_self_orbis_sysvec  0x3bee10
+#define kdlsym_addr_self_orbis_sysvec  0x1a6bd88
 #define kdlsym_addr_Sha256Hmac  0x13a3d0
 #define kdlsym_addr_snprintf  0xc53f0
 #define kdlsym_addr_spinlock_exit  0x7cfa0
